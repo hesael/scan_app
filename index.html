@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Barcode Scanner</title>
+    <style>
+        #results {
+            margin-top: 20px;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="scan">Scan</button>
+    <div id="results"></div>
+
+    <script>
+        // Get video, canvas and context
+        var video = document.getElementById('video');
+
+        // Get access to the camera
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
+                video.srcObject = stream;
+                video.play();
+            });
+        }
+
+        document.getElementById('scan').addEventListener('click', function() {
+            var canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+
+            canvas.toBlob(function(blob) {
+                var formData = new FormData();
+                formData.append('image', blob);
+
+                fetch('/scan', {
+                    method: 'POST',
+                    body: formData
+                }).then(function(response) {
+                    return response.json();
+                }).then(function(barcodeData) {
+                    document.getElementById('results').textContent = 'Found barcodes: ' + barcodeData.join(', ');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
